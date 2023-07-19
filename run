@@ -2,6 +2,8 @@
 
 import enum
 import os
+import sys
+import time
 
 import hid
 
@@ -15,11 +17,11 @@ def get_L2_position():
         if device["product_string"] in ("FrSky Simulator", "BetaFPV Taranis Joystick")
     ][0]
 
-    gamepad = self.device()
+    gamepad = hid.device()
     gamepad.open(device["vendor_id"], device["product_id"])
     gamepad.set_nonblocking(True)
 
-    report = self.gamepad.read(64)
+    report = gamepad.read(64)
     event = [r - 256 if r > 127 else r for r in report]
     L2 = event[8]
 
@@ -32,14 +34,32 @@ def get_L2_position():
 
 
 def main():
-    if get_L2_position() == SwitchPosition.UP:
+    position = None
+    while True:
+        try:
+            position = get_L2_position()
+        except:
+            pass
+        else:
+            break
+
+    if position == SwitchPosition.UP:
+        print("L2 is up; starting RL")
+        sys.stdout.flush()
         os.execlp(
+            "python3",
             "python3",
             "/home/pi/puppersim/puppersim/isaac_gym_policy.py",
             "--run_on_robot",
         )
+    elif position == SwitchPosition.DOWN:
+        print("L2 is down; starting heuristic")
+        sys.stdout.flush()
+        os.execlp("python3", "python3", "/home/pi/StanfordQuadruped/run_djipupper.py")
     else:
-        os.execlp("python3", "/home/pi/StanfordQuadruped/run_djipupper.py")
+        print("L2 is disengaged; sleeping")
+        sys.stdout.flush()
+        time.sleep(1)
 
 
 if __name__ == "__main__":
