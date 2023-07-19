@@ -1,0 +1,15 @@
+[Unit]
+Description=wrapper for switching between heuristic and RL pupper drivers
+After=multi-user.target
+
+[Service]
+WorkingDirectory=/home/pi/
+User=pi
+ExecStart=/usr/bin/python3 /home/pi/pupper.service/run
+Restart=always
+RestartSec=5
+KillSignal=2
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
